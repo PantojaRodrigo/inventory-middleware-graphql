@@ -1,121 +1,104 @@
-const {
-  GraphQLObjectType,
-  GraphQLSchema,
-  GraphQLInt,
-  GraphQLString,
-  GraphQLList,
-  GraphQLNonNull,
-} = require("graphql");
+const { buildSchema, GraphQLError } = require("graphql");
 const axios = require("axios");
 
-// Definición de Location
-const LocationType = new GraphQLObjectType({
-  name: "Location",
-  fields: {
-    locationId: { type: GraphQLInt },
-    state: { type: GraphQLString },
-    address: { type: GraphQLString },
-    phoneNumber: { type: GraphQLInt },
-  },
-});
+const schema = buildSchema(`
+  type Location {
+    locationId: Int
+    state: String
+    address: String
+    phoneNumber: String
+  }
 
-// Definición de Item
-const ItemType = new GraphQLObjectType({
-  name: "Item",
-  fields: {
-    itemId: { type: GraphQLInt },
-    itemName: { type: GraphQLString },
-    description: { type: GraphQLString },
-    location: { type: LocationType },
-  },
-});
+  type Item {
+    itemId: Int
+    itemName: String
+    description: String
+    location: Location
+  }
 
-// Root Query
-const RootQuery = new GraphQLObjectType({
-  name: "RootQueryType",
-  fields: {
-    items: {
-      type: new GraphQLList(ItemType),
-      args: { search: { type: GraphQLString } },
-      resolve(parent, args) {
-        let url = "http://localhost:8080/items";
-        if (args.search) {
-          url += `?search=${args.search}`;
-        }
-        return axios.get(url).then((res) => res.data);
-      },
-    },
-    item: {
-      type: ItemType,
-      args: { id: { type: GraphQLInt } },
-      resolve(parent, args) {
-        return axios
-          .get(`http://localhost:8080/items/${args.id}`)
-          .then((res) => res.data);
-      },
-    },
-  },
-});
+  input LocationInput {
+    locationId: Int!
+    state: String!
+    address: String
+    phoneNumber: String
+  }
+    
+  input ItemInput {
+    itemId: Int!
+    itemName: String!
+    description: String
+    location: LocationInput!
+  }
 
-// Mutaciones
-const Mutation = new GraphQLObjectType({
-  name: "Mutation",
-  fields: {
-    addItem: {
-      type: ItemType,
-      args: {
-        itemId: { type: new GraphQLNonNull(GraphQLInt) },
-        itemName: { type: new GraphQLNonNull(GraphQLString) },
-        description: { type: GraphQLString },
-        location: {
-          locationId: { type: new GraphQLNonNull(GraphQLInt) },
-          state: { type: new GraphQLNonNull(GraphQLString) },
-          address: { type: GraphQLString },
-          phoneNumber: { type: GraphQLString },
-        },
-      },
-      resolve(parent, args) {
-        return axios
-          .post("http://localhost:8080/items", {
-            itemName: args.itemId,
-            itemName: args.itemName,
-            description: args.description,
-            location: args.location,
-          })
-          .then((res) => res.data);
-      },
-    },
-    /* updateItem: {
-      type: ItemType,
-      args: {
-        id: { type: new GraphQLNonNull(GraphQLInt) },
-        itemName: { type: GraphQLString },
-        description: { type: GraphQLString },
-        locationId: { type: GraphQLInt },
-      },
-      resolve(parent, args) {
-        return axios
-          .patch(`http://localhost:8080/items/${args.id}`, {
-            itemName: args.itemName,
-            description: args.description,
-            locationId: args.locationId,
-          })
-          .then((res) => res.data);
-      },
-    },
-    deleteItem: {
-      type: ItemType,
-      args: { id: { type: new GraphQLNonNull(GraphQLInt) } },
-      resolve(parent, args) {
-        return axios
-          .delete(`http://localhost:8080/items/${args.id}`)
-          .then((res) => res.data);
-      },
-    }, */
-  },
-});
+  type Query {
+    items(search: String): [Item]
+    item(id: Int): Item
+  }
 
-module.exports = new GraphQLSchema({
-  query: RootQuery,
-  mutation: Mutation,
-});
+  type Mutation {
+    addItem(newItem: ItemInput!): Item
+    updateItem(id: Int!,newItem: ItemInput!): Item
+    deleteItem(id: Int!): Item
+  }
+`);
+
+const root = {
+  items: ({ search }) => {
+    let url = "http://localhost:8080/items";
+    if (search) {
+      url += `?search=${search}`;
+    }
+    return axios
+      .get(url)
+      .then((res) => res.data)
+      .catch((error) => {
+        if (error.response) {
+          throw new GraphQLError(error.response.data);
+        } else throw new GraphQLError(error.message);
+      });
+  },
+  item: ({ id }) => {
+    return axios
+      .get(`http://localhost:8080/items/${id}`)
+      .then((res) => res.data)
+      .catch((error) => {
+        if (error.response) {
+          throw new GraphQLError(error.response.data);
+        } else throw new GraphQLError(error.message);
+      });
+  },
+  addItem: ({ newItem }) => {
+    console.log("newitem: " + newItem);
+    return axios
+      .post("http://localhost:8080/items", newItem)
+      .then((res) => res.data)
+      .catch((error) => {
+        if (error.response) {
+          throw new GraphQLError(error.response.data);
+        } else throw new GraphQLError(error.message);
+      });
+  },
+
+  updateItem: ({ id, newItem }) => {
+    return axios
+      .patch(`http://localhost:8080/items/${id}`, newItem)
+      .then((res) => res.data)
+      .catch((error) => {
+        if (error.response) {
+          throw new GraphQLError(error.response.data);
+        } else throw new GraphQLError(error.message);
+      });
+  },
+  deleteItem: ({ id }) => {
+    return axios
+      .delete(`http://localhost:8080/items/${id}`)
+      .then((res) => res.data)
+      .catch((error) => {
+        if (error.response) {
+          throw new GraphQLError(error.response.data);
+        } else throw new GraphQLError(error.message);
+      });
+  },
+};
+
+module.exports = { schema, root };
