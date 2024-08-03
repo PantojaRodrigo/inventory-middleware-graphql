@@ -1,7 +1,20 @@
 const { buildSchema, GraphQLError } = require("graphql");
 const axios = require("axios");
+const { NetworkError } = require("graphql-http");
+const { options } = require("ruru/cli");
 
 const schema = buildSchema(`
+  enum ErrorType {
+    NETWORK_ERROR
+    GRAPHQL_ERROR
+  }
+
+  type Error {
+    message: String
+    type: ErrorType
+  }
+
+
   type Location {
     locationId: Int
     state: String
@@ -54,7 +67,16 @@ const root = {
       .catch((error) => {
         if (error.response) {
           throw new GraphQLError(error.response.data);
-        } else throw new GraphQLError(error.message);
+        } else if (error.request) {
+          throw new GraphQLError(
+            "Cannot connect with server, please try again later",
+            { extensions: { code: "NETWORK_ERROR" } }
+          );
+        } else {
+          throw new GraphQLError(
+            "Unexpected server error, please try again later"
+          );
+        }
       });
   },
   item: ({ id }) => {
@@ -64,7 +86,16 @@ const root = {
       .catch((error) => {
         if (error.response) {
           throw new GraphQLError(error.response.data);
-        } else throw new GraphQLError(error.message);
+        } else if (error.request) {
+          throw new GraphQLError(
+            "Cannot connect with server, please try again later",
+            { extensions: { code: "NETWORK_ERROR" } }
+          );
+        } else {
+          throw new NetworkError(
+            "Unexpected server error, please try again later"
+          );
+        }
       });
   },
   addItem: ({ newItem }) => {
@@ -75,7 +106,16 @@ const root = {
       .catch((error) => {
         if (error.response) {
           throw new GraphQLError(error.response.data);
-        } else throw new GraphQLError(error.message);
+        } else if (error.request) {
+          throw new GraphQLError(
+            "Cannot connect with server, please try again later",
+            { extensions: { code: "NETWORK_ERROR" } }
+          );
+        } else {
+          throw new NetworkError(
+            "Unexpected server error, please try again later"
+          );
+        }
       });
   },
 
@@ -86,7 +126,16 @@ const root = {
       .catch((error) => {
         if (error.response) {
           throw new GraphQLError(error.response.data);
-        } else throw new GraphQLError(error.message);
+        } else if (error.request) {
+          throw new GraphQLError(
+            "Cannot connect with server, please try again later",
+            { extensions: { code: "NETWORK_ERROR" } }
+          );
+        } else {
+          throw new NetworkError(
+            "Unexpected server error, please try again later"
+          );
+        }
       });
   },
   deleteItem: ({ id }) => {
@@ -96,7 +145,16 @@ const root = {
       .catch((error) => {
         if (error.response) {
           throw new GraphQLError(error.response.data);
-        } else throw new GraphQLError(error.message);
+        } else if (error.request) {
+          throw new GraphQLError(
+            "Cannot connect with server, please try again later",
+            { extensions: { code: "NETWORK_ERROR" } }
+          );
+        } else {
+          throw new NetworkError(
+            "Unexpected server error, please try again later"
+          );
+        }
       });
   },
 };
