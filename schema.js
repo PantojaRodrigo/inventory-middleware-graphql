@@ -66,6 +66,12 @@ const root = {
       .then((res) => res.data)
       .catch((error) => {
         if (error.response) {
+          if (error.response.status === 500) {
+            throw new GraphQLError(
+              "Cannot connect with server, please try again later",
+              { extensions: { code: "NETWORK_ERROR" } }
+            );
+          }
           throw new GraphQLError(error.response.data);
         } else if (error.request) {
           throw new GraphQLError(
@@ -85,7 +91,13 @@ const root = {
       .then((res) => res.data)
       .catch((error) => {
         if (error.response) {
-          throw new GraphQLError(error.response.data);
+          if (error.response.status === 500) {
+            throw new GraphQLError(
+              "Cannot connect with server, please try again later",
+              { extensions: { code: "NETWORK_ERROR" } }
+            );
+          }
+          throw new GraphQLError(JSON.stringify(error.response.data));
         } else if (error.request) {
           throw new GraphQLError(
             "Cannot connect with server, please try again later",
@@ -105,6 +117,12 @@ const root = {
       .then((res) => res.data)
       .catch((error) => {
         if (error.response) {
+          if (error.response.status === 500) {
+            throw new GraphQLError(
+              "Cannot connect with server, please try again later",
+              { extensions: { code: "NETWORK_ERROR" } }
+            );
+          }
           throw new GraphQLError(error.response.data);
         } else if (error.request) {
           throw new GraphQLError(
@@ -125,6 +143,12 @@ const root = {
       .then((res) => res.data)
       .catch((error) => {
         if (error.response) {
+          if (error.response.status === 500) {
+            throw new GraphQLError(
+              "Cannot connect with server, please try again later",
+              { extensions: { code: "NETWORK_ERROR" } }
+            );
+          }
           throw new GraphQLError(error.response.data);
         } else if (error.request) {
           throw new GraphQLError(
@@ -144,6 +168,12 @@ const root = {
       .then((res) => res.data)
       .catch((error) => {
         if (error.response) {
+          if (error.response.status === 500) {
+            throw new GraphQLError(
+              "Cannot connect with server, please try again later",
+              { extensions: { code: "NETWORK_ERROR" } }
+            );
+          }
           throw new GraphQLError(error.response.data);
         } else if (error.request) {
           throw new GraphQLError(
