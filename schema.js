@@ -45,7 +45,9 @@ const schema = buildSchema(`
 
   type Query {
     items(search: String): [Item]
+    filteredItems(id: Int, name: String, state: String): [Item]
     item(id: Int): Item
+    states: [String]
   }
 
   type Mutation {
@@ -64,6 +66,42 @@ const root = {
     return axios
       .get(url)
       .then((res) => res.data)
+      .catch((error) => {
+        if (error.response) {
+          if (error.response.status === 500) {
+            throw new GraphQLError(
+              "Cannot connect with server, please try again later",
+              { extensions: { code: "NETWORK_ERROR" } }
+            );
+          }
+          throw new GraphQLError(error.response.data);
+        } else if (error.request) {
+          throw new GraphQLError(
+            "Cannot connect with server, please try again later",
+            { extensions: { code: "NETWORK_ERROR" } }
+          );
+        } else {
+          throw new GraphQLError(
+            "Unexpected server error, please try again later"
+          );
+        }
+      });
+  },
+  filteredItems: ({ id, name, state }) => {
+    let url = "http://localhost:8080/items";
+
+    return axios
+      .get(url)
+      .then((res) => {
+        return res.data.filter((item) => {
+          const matchesId = id ? item?.itemId.toString().includes(id) : true;
+          const matchesName = name ? item?.itemName.toLowerCase().includes(name.toLowerCase()) : true;
+          const matchesState = state ? item?.location?.state.toLowerCase().includes(state.toLowerCase()) : true;
+
+          return matchesId && matchesName && matchesState;
+        });
+      }
+      )
       .catch((error) => {
         if (error.response) {
           if (error.response.status === 500) {
@@ -110,8 +148,35 @@ const root = {
         }
       });
   },
+  states: () => {
+    return axios
+      .get("http://localhost:8080/items")
+      .then((res) => [
+          ...new Set(res.data.map((item) => item.location.state))
+      ])
+      .catch((error) => {
+        if (error.response) {
+          if (error.response.status === 500) {
+            throw new GraphQLError(
+              "Cannot connect with server, please try again later",
+              { extensions: { code: "NETWORK_ERROR" } }
+            );
+          }
+          throw new GraphQLError(error.response.data);
+        } else if (error.request) {
+          throw new GraphQLError(
+            "Cannot connect with server, please try again later",
+            { extensions: { code: "NETWORK_ERROR" } }
+          );
+        } else {
+          throw new NetworkError(
+            "Unexpected server error, please try again later"
+          );
+        }
+      });
+  },
   addItem: ({ newItem }) => {
-    console.log("newitem: " + newItem);
+    // console.log("newitem: " + newItem);
     return axios
       .post("http://localhost:8080/items", newItem)
       .then((res) => res.data)
@@ -136,7 +201,6 @@ const root = {
         }
       });
   },
-
   updateItem: ({ id, newItem }) => {
     return axios
       .patch(`http://localhost:8080/items/${id}`, newItem)
